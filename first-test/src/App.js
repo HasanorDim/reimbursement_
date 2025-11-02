@@ -19,7 +19,7 @@ import SalesDirector from "./pages/SalesDirectorDashboard";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { Snackbar, Alert } from "@mui/material";
-import Reimbursement from "./components/Reimbursement";
+import SalesDirectorReimbursementList from "./components/SalesDirectorReimbursementList";
 
 
 // Global Context for State Management
@@ -276,7 +276,7 @@ function App() {
                 )
               }
             >
-              <Route index element={<Reimbursement />} />
+              <Route index element={<SalesDirectorReimbursementList />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/login" />} />

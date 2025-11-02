@@ -348,6 +348,104 @@ export async function getPendingApprovals(req, res) {
   }
 }
 
+export async function getPendingAllApprovals(req, res) {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    console.log("🔍 Fetching pending approvals for role:", user.role);
+
+    const whereClause = {
+      // current_approver: user.role,
+      status: ["Pending"],
+    };
+
+    // ✅ If user is SUL or Account Manager, DON'T filter by SAP code - get ALL data
+    if (["SUL", "Account Manager"].includes(user.role)) {
+      console.log(
+        "🔍 SUL/Account Manager - fetching ALL pending approvals without SAP code filter"
+      );
+      // Remove any SAP code filtering - whereClause remains as is (only role and status)
+    } else {
+      // For other roles, you can keep SAP code filtering if needed
+      const userSapCodes = [user.sap_code_1, user.sap_code_2].filter(Boolean);
+      if (userSapCodes.length > 0) {
+        whereClause.sap_code = userSapCodes;
+        console.log("🔍 Filtering by SAP codes:", userSapCodes);
+      }
+    }
+
+    const reimbursements = await Reimbursement.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "email", "role", "profile_picture"],
+        },
+        {
+          model: Approval,
+          as: "approvals",
+          include: [
+            {
+              model: User,
+              as: "approver",
+              attributes: ["id", "name", "email", "role", "profile_picture"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    console.log(`✅ Found ${reimbursements.length} pending approvals`);
+
+    const formatted = reimbursements.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      user: r.user
+        ? {
+            id: r.user.id,
+            name: r.user.name,
+            email: r.user.email,
+            role: r.user.role,
+            profile_picture: r.user?.dataValues?.profile_picture,
+          }
+        : null,
+      category: r.category,
+      type: r.type,
+      description: r.description,
+      total: r.total,
+      status: r.status,
+      currentApprover: r.current_approver,
+      sapCode: r.sap_code,
+      // ✅ FIX: Format dates consistently
+      date: r.date_of_expense
+        ? new Date(r.date_of_expense).toISOString().split("T")[0]
+        : null,
+      receipt: r.receipt_data
+        ? {
+            data: r.receipt_data,
+            mimetype: r.receipt_mimetype,
+            filename: r.receipt_filename,
+          }
+        : null,
+      submittedAt: r.submitted_at ? r.submitted_at.toISOString() : null,
+      merchant: r.merchant,
+      items: r.items,
+      extractedText: null,
+      approvals: r.approvals || [],
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("❌ Error fetching pending approvals:", err);
+    res.status(500).json({ error: "Failed to fetch pending approvals" });
+  }
+}
+
 /**
  * Update reimbursement status (approve/reject)
  */

@@ -4,7 +4,8 @@ import {
   createReimbursement, 
   getUserReimbursements, 
   updateReimbursementStatus, 
-  getPendingApprovals 
+  getPendingApprovals,
+  getPendingAllApprovals
 } from '../controllers/reimbursementController.js';
 import { upload } from '../middlewares/upload.js';
 import Reimbursement from '../models/Reimbursement.js';  // ← MUST HAVE THIS
@@ -73,6 +74,8 @@ router.get('/monthly-stats', isAuthenticated, async (req, res) => {
 
 // 📋 Get reimbursements pending current user's approval (for Approval Dashboard)
 router.get('/pending-approvals', isAuthenticated, getPendingApprovals);
+
+router.get('/pending-all-approvals', isAuthenticated, getPendingAllApprovals);
 
 // 📝 Update reimbursement status (approve/reject)
 router.put('/:id', isAuthenticated, updateReimbursementStatus);

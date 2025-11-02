@@ -3,7 +3,6 @@ import { useNavigate, Outlet } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import MonthlyStats from "../components/MonthlyStats.js";
 import UserSettings from "../components/UserSettings.js";
-import Reimbursement from "../components/Reimbursement.js";
 import SalesDirectorReportExport from "../components/SalesDirectorReportExport.js";
 import ManageSAPCodes from "../components/ManageSAPCodes.js";
 import ManageUsers from "../components/ManageUsers.js";
@@ -35,6 +34,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ThemeToggle from "../components/ThemeToggle.js";
 import { useAppContext } from "../App.js";
 import { userUserStore } from "../store/userUserStore.js";
+import SalesDirectorReimbursementList from "../components/SalesDirectorReimbursementList.js";
 
 function SalesDirectorDashboard() {
   const theme = useTheme();
@@ -115,9 +115,9 @@ function SalesDirectorDashboard() {
 
     switch (tabValue) {
       case 0:
-        return <Reimbursement />;
+        return <SalesDirectorReimbursementList />;
       case 1:
-        return <div>Employee Reimbursement - Coming Soon</div>;
+      // return <ReimberursementEmployee />;
       case 2:
         return <SalesDirectorReportExport />;
       case 3:
@@ -125,7 +125,7 @@ function SalesDirectorDashboard() {
       case 4:
         return <ManageUsers />;
       default:
-        return <Reimbursement />;
+        return <SalesDirectorReimbursementList />;
     }
   };
 
@@ -165,20 +165,25 @@ function SalesDirectorDashboard() {
         <List>
           {/* Reimbursement Dropdown */}
           <ListItemButton
-            onClick={handleReimbursementClick}
+            selected={tabValue === 0}
+            // onClick={handleReimbursementClick}
+            onClick={() => handleTabChange(0)}
             sx={{
               borderRadius: 2,
               mb: 0.5,
+              "&.Mui-selected": {
+                backgroundColor: (theme) => theme.palette.action.selected,
+                color: (theme) => theme.palette.primary.main,
+              },
             }}
           >
             <ListItemIcon>
               <ListAltIcon />
             </ListItemIcon>
             <ListItemText primary="Reimbursement List" />
-            {reimbursementOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
 
-          <Collapse in={reimbursementOpen} timeout="auto" unmountOnExit>
+          {/* <Collapse in={reimbursementOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItemButton
                 selected={tabValue === 0}
@@ -218,7 +223,7 @@ function SalesDirectorDashboard() {
                 <ListItemText primary="Employee Reimbursement" />
               </ListItemButton>
             </List>
-          </Collapse>
+          </Collapse> */}
 
           {/* Export Reports */}
           <ListItemButton
@@ -346,9 +351,7 @@ function SalesDirectorDashboard() {
               open={Boolean(anchorEl)}
               onClose={handleProfileClose}
             >
-              <MenuItem onClick={handleUserProfileClick}>
-                User Profile
-              </MenuItem>
+              <MenuItem onClick={handleUserProfileClick}>User Profile</MenuItem>
               <MenuItem onClick={handleLogoutClick}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <span>Logout</span>
