@@ -240,6 +240,7 @@ export async function approve(req, res) {
 
 /**
  * Reject a reimbursement (by current approver)
+ * Sends rejection email to requester with CC to other approvers at the same level
  */
 export async function reject(req, res) {
   try {
@@ -257,13 +258,24 @@ export async function reject(req, res) {
 
     console.log(`👤 ${approver.name} (${approver.role}) attempting to reject reimbursement #${id}`);
 
-    // ✅ Fetch reimbursement with user
+    // ✅ Fetch reimbursement with user and approvals
     const r = await Reimbursement.findByPk(id, {
       include: [
         {
           model: User,
           as: 'user',
           attributes: ['id', 'name', 'email', 'role']
+        },
+        {
+          model: Approval,
+          as: 'approvals',
+          include: [
+            {
+              model: User,
+              as: 'approver',
+              attributes: ['id', 'name', 'email', 'role']
+            }
+          ]
         }
       ]
     });
@@ -352,7 +364,28 @@ export async function reject(req, res) {
 
     console.log(`✅ Reimbursement marked as Rejected`);
 
-    // 📧 Send rejection email to requester
+    // ✅ NEW: Find other approvers at the same level to CC
+    const allUsers = await User.findAll();
+    const ccEmails = [];
+    
+    // For SUL and Account Manager roles, find other approvers with the same SAP code
+    if (['SUL', 'Account Manager'].includes(approver.role)) {
+      const otherApprovers = allUsers.filter(u => 
+        u.role === approver.role && // Same role
+        u.id !== approver.id && // Not the current approver
+        (u.sap_code_1 === r.sap_code || u.sap_code_2 === r.sap_code) // Has same SAP code
+      );
+      
+      otherApprovers.forEach(user => {
+        if (user.email && user.email.trim()) {
+          ccEmails.push(user.email);
+        }
+      });
+      
+      console.log(`📧 Found ${otherApprovers.length} other ${approver.role}(s) with SAP code ${r.sap_code} to CC`);
+    }
+
+    // 📧 Send rejection email to requester with CC to other approvers
     try {
       const emailHtml = rejectionTemplate(
         r, 
@@ -365,10 +398,14 @@ export async function reject(req, res) {
       await sendEmail(
         r.user.email,
         `❌ Reimbursement Rejected - ${r.sap_code}`,
-        emailHtml
+        emailHtml,
+        ccEmails.length > 0 ? ccEmails : null // Pass CC emails if any
       );
       
       console.log(`📧 Rejection email sent to ${r.user.email}`);
+      if (ccEmails.length > 0) {
+        console.log(`📧 CC sent to: ${ccEmails.join(', ')}`);
+      }
     } catch (emailError) {
       console.error('❌ Failed to send rejection email:', emailError);
       // Don't fail the rejection if email fails
@@ -376,8 +413,11 @@ export async function reject(req, res) {
 
     res.json({ 
       ok: true, 
-      message: 'Reimbursement rejected successfully. Email notification sent to requester.',
-      reimbursement: r 
+      message: ccEmails.length > 0 
+        ? `Reimbursement rejected successfully. Email notifications sent to requester and ${ccEmails.length} other approver(s).`
+        : 'Reimbursement rejected successfully. Email notification sent to requester.',
+      reimbursement: r,
+      ccSent: ccEmails.length
     });
   } catch (err) {
     console.error('❌ Error rejecting reimbursement:', err);

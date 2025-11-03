@@ -1,5 +1,3 @@
-//first-test/src/components/Reimbursement.js
-
 import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
@@ -25,6 +23,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  FormControl,
+  FormLabel,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -40,7 +43,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useAppContext } from "../App";
 
-function Reimbursement() {
+function SalesDirectorReimbursementList() {
   const { user, showNotification } = useAppContext();
   const [pendings, setPendings] = useState([]);
   const [filteredPendings, setFilteredPendings] = useState([]);
@@ -55,6 +58,14 @@ function Reimbursement() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
 
+  // Role filter state
+  const [roleFilters, setRoleFilters] = useState({
+    Employee: true,
+    SUL: true,
+    "Invoice Specialist": true,
+    "Account Manager": true,
+  });
+
   const [remarks, setRemarks] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [receiptZoom, setReceiptZoom] = useState(1);
@@ -68,7 +79,7 @@ function Reimbursement() {
   // Apply all filters whenever any filter changes
   useEffect(() => {
     applyAllFilters();
-  }, [pendings, searchTerm, statusFilter, categoryFilter]);
+  }, [pendings, searchTerm, statusFilter, categoryFilter, roleFilters]);
 
   const fetchReimbursements = async () => {
     if (!user || hasFetched.current) return;
@@ -78,7 +89,7 @@ function Reimbursement() {
       setError(null);
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/reimbursements/pending-approvals`,
+        `${process.env.REACT_APP_API_URL}/api/reimbursements/pending-all-approvals`,
         {
           method: "GET",
           headers: {
@@ -107,12 +118,25 @@ function Reimbursement() {
   const applyAllFilters = () => {
     let filtered = [...pendings];
 
-    // Apply status filter first
+    // Apply role filter first
+    const selectedRoles = Object.keys(roleFilters).filter(
+      (role) => roleFilters[role]
+    );
+    if (
+      selectedRoles.length > 0 &&
+      selectedRoles.length < Object.keys(roleFilters).length
+    ) {
+      filtered = filtered.filter(
+        (item) => item.user?.role && selectedRoles.includes(item.user.role)
+      );
+    }
+
+    // Apply status filter second
     if (statusFilter !== "All Status") {
       filtered = filtered.filter((item) => item.status === statusFilter);
     }
 
-    // Apply category filter second
+    // Apply category filter third
     if (categoryFilter !== "All Categories") {
       filtered = filtered.filter((item) => item.category === categoryFilter);
     }
@@ -163,6 +187,30 @@ function Reimbursement() {
     }
   };
 
+  // Role filter handlers
+  const handleRoleFilterChange = (event) => {
+    const { name, checked } = event.target;
+    setRoleFilters((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
+
+  const handleSelectAllRoles = (event) => {
+    const checked = event.target.checked;
+    setRoleFilters({
+      Employee: checked,
+      SUL: checked,
+      "Invoice Specialist": checked,
+      "Account Manager": checked,
+    });
+  };
+
+  // Calculate role filter states
+  const allRolesSelected = Object.values(roleFilters).every(Boolean);
+  const someRolesSelected =
+    Object.values(roleFilters).some(Boolean) && !allRolesSelected;
+
   // Get unique statuses
   const getUniqueStatuses = () => {
     return ["All Status", "Pending", "Approved", "Rejected", "Validated"];
@@ -170,8 +218,6 @@ function Reimbursement() {
 
   // Get unique categories
   const getUniqueCategories = () => {
-    // const categories = [...new Set(pendings.map((item) => item.category))];
-    // return ["All Categories", ...categories];
     return [
       "All Categories",
       "Transportation (Commute)",
@@ -449,6 +495,84 @@ function Reimbursement() {
           ))}
         </TextField>
 
+        {/* Submitted By Filter */}
+        <FormControl component="fieldset" variant="standard">
+          <FormLabel
+            component="legend"
+            sx={{
+              fontSize: "0.875rem",
+              mb: 1,
+              fontWeight: 600,
+              color: "text.primary",
+            }}
+          >
+            Submitted By
+          </FormLabel>
+          <FormGroup sx={{ flexDirection: "row", gap: 1 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={allRolesSelected}
+                  indeterminate={someRolesSelected}
+                  onChange={handleSelectAllRoles}
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  All Roles
+                </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={roleFilters.Employee}
+                  onChange={handleRoleFilterChange}
+                  name="Employee"
+                  size="small"
+                />
+              }
+              label={<Typography variant="body2">Employee</Typography>}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={roleFilters.SUL}
+                  onChange={handleRoleFilterChange}
+                  name="SUL"
+                  size="small"
+                />
+              }
+              label={<Typography variant="body2">SUL</Typography>}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={roleFilters["Invoice Specialist"]}
+                  onChange={handleRoleFilterChange}
+                  name="Invoice Specialist"
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="body2">Invoice Specialist</Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={roleFilters["Account Manager"]}
+                  onChange={handleRoleFilterChange}
+                  name="Account Manager"
+                  size="small"
+                />
+              }
+              label={<Typography variant="body2">Account Manager</Typography>}
+            />
+          </FormGroup>
+        </FormControl>
+
         {/* Results count */}
         <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
           {filteredPendings.length} requests found
@@ -597,12 +721,6 @@ function Reimbursement() {
                 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  {/* <Avatar
-                    sx={{ width: 56, height: 56, bgcolor: "primary.main" }}
-                  >
-                    <PersonIcon sx={{ fontSize: 32 }} />
-                  </Avatar> */}
-
                   <Avatar
                     src={selectedTicket.user?.profile_picture}
                     alt={
@@ -1113,4 +1231,4 @@ function Reimbursement() {
   );
 }
 
-export default Reimbursement;
+export default SalesDirectorReimbursementList;
