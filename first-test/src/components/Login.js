@@ -148,7 +148,7 @@ function Login() {
         >
           {/* Header */}
           <Box sx={{ mb: 3, textAlign: "center" }}>
-            <Box sx={{ mb: 1.5, display: "flex", justifyContent: "center" }}>
+            <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
               <img
                 src={
                   theme.palette.mode === "dark"
