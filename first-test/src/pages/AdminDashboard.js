@@ -88,24 +88,39 @@ function AdminDashboard() {
     getUser();
   }, []);
 
-  const tabs = [
+  // Check if user is Finance Officer
+  const isFinanceOfficer = user?.role === "Finance Officer";
+
+  // Define all tabs with their visibility rules
+  const allTabs = [
     {
       label: "Reimbursement Lists",
       icon: <ListAltIcon />,
+      component: <ReimbursementList />,
+      visible: true, // Always visible
     },
     {
       label: "Export Summary Reports",
       icon: <AssessmentIcon />,
+      component: <ReportExport />,
+      visible: true, // Always visible
     },
     {
       label: "Upload Receipt",
       icon: <ReceiptIcon />,
+      component: <ReceiptUpload />,
+      visible: !isFinanceOfficer, // Hidden for Finance Officers
     },
     {
       label: "Track Status",
       icon: <TrackChangesIcon />,
+      component: <StatusTracker />,
+      visible: !isFinanceOfficer, // Hidden for Finance Officers
     },
   ];
+
+  // Filter tabs based on visibility
+  const visibleTabs = allTabs.filter(tab => tab.visible);
 
   const settingsTab = {
     label: "Settings",
@@ -119,18 +134,12 @@ function AdminDashboard() {
       return settingsTab.component;
     }
 
-    switch (tabValue) {
-      case 0:
-        return <ReimbursementList />;
-      case 1:
-        return <ReportExport />;
-      case 2:
-        return <ReceiptUpload />;
-      case 3:
-        return <StatusTracker />;
-      default:
-        return null;
+    // Get the selected tab from visible tabs
+    if (tabValue >= 0 && tabValue < visibleTabs.length) {
+      return visibleTabs[tabValue].component;
     }
+
+    return null;
   };
 
   return (
@@ -165,7 +174,7 @@ function AdminDashboard() {
           </IconButton>
         </Box>
         <List>
-          {tabs.map((tab, index) => (
+          {visibleTabs.map((tab, index) => (
             <ListItemButton
               key={tab.label}
               selected={tabValue === index}
@@ -185,7 +194,7 @@ function AdminDashboard() {
           ))}
         </List>
 
-        {drawerOpen && (
+        {drawerOpen && !isFinanceOfficer && (
           <Box sx={{ mt: "auto" }}>
             <MonthlyStats />
           </Box>
