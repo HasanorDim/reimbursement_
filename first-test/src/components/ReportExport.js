@@ -57,27 +57,78 @@ function ReportExport() {
 
     // Set column definitions
     worksheet.columns = [
-      { header: "Date", key: "date", width: 15 },
-      { header: "User", key: "user", width: 20 },
-      { header: "Category", key: "category", width: 20 },
+      { header: "Reimbursement ID", key: "id", width: 20 },
+      { header: "Employee Name", key: "employeeName", width: 25 },
+      { header: "Employee Role", key: "employeeRole", width: 20 },
+      { header: "SAP Code", key: "sapCode", width: 15 },
+      { header: "Category", key: "category", width: 25 },
+      { header: "Subject/Title", key: "subject", width: 30 },
       { header: "Description", key: "description", width: 40 },
-      { header: "Amount (₱)", key: "amount", width: 15 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Submitted", key: "submitted", width: 20 },
-      { header: "Approved By", key: "approvedBy", width: 20 },
+      { header: "Amount", key: "amount", width: 15 },
+      { header: "Date of Expense", key: "expenseDate", width: 18 },
+      { header: "Date Submitted", key: "dateSubmitted", width: 18 },
     ];
 
     // Add data rows
     filteredData.forEach((item) => {
+      // Parse expense date properly
+      let expenseDate = null;
+      if (item.date) {
+        // Try parsing the date string
+        const dateStr = item.date;
+        if (typeof dateStr === 'string') {
+          // Handle YYYY-MM-DD format
+          if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            expenseDate = new Date(year, month - 1, day);
+          } else {
+            // Try general date parsing
+            expenseDate = new Date(dateStr);
+            if (isNaN(expenseDate.getTime())) {
+              expenseDate = null;
+            }
+          }
+        }
+      } else if (item.date_of_expense) {
+        const dateStr = item.date_of_expense;
+        if (typeof dateStr === 'string') {
+          if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            expenseDate = new Date(year, month - 1, day);
+          } else {
+            expenseDate = new Date(dateStr);
+            if (isNaN(expenseDate.getTime())) {
+              expenseDate = null;
+            }
+          }
+        }
+      }
+
+      // Parse submitted date properly
+      let submittedDate = null;
+      if (item.submittedAt) {
+        submittedDate = new Date(item.submittedAt);
+        if (isNaN(submittedDate.getTime())) {
+          submittedDate = null;
+        }
+      } else if (item.submitted_at) {
+        submittedDate = new Date(item.submitted_at);
+        if (isNaN(submittedDate.getTime())) {
+          submittedDate = null;
+        }
+      }
+
       worksheet.addRow({
-        date: item.createdAt || "N/A",
-        user: item.user.name || "Unknown",
+        id: item.id || "N/A",
+        employeeName: item.user?.name || "Unknown",
+        employeeRole: item.user?.role || "N/A",
+        sapCode: item.sapCode || item.sap_code || "N/A",
         category: item.category || item.type || "N/A",
+        subject: item.items || "N/A",
         description: item.description || "N/A",
-        amount: parseFloat(item.total).toFixed(2),
-        status: item.status,
-        submitted: new Date(item.submittedAt).toLocaleDateString(),
-        approvedBy: item.approvedBy || "N/A",
+        amount: parseFloat(item.total) || 0,
+        expenseDate: expenseDate,
+        dateSubmitted: submittedDate,
       });
     });
 
@@ -93,6 +144,15 @@ function ReportExport() {
       horizontal: "center",
     };
     worksheet.getRow(1).height = 25;
+
+    // Format columns
+    // Format Amount column as number with 2 decimals and peso sign
+    worksheet.getColumn('amount').numFmt = '₱#,##0.00';
+    worksheet.getColumn('amount').alignment = { horizontal: 'right' };
+
+    // Format date columns as short date (MM/DD/YYYY)
+    worksheet.getColumn('expenseDate').numFmt = 'mm/dd/yyyy';
+    worksheet.getColumn('dateSubmitted').numFmt = 'mm/dd/yyyy';
 
     // Add borders to all cells
     worksheet.eachRow((row, rowNumber) => {
@@ -125,9 +185,6 @@ function ReportExport() {
       (sum, item) => sum + parseFloat(item.total),
       0
     );
-    const approvedAmount = filteredData
-      .filter((item) => item.status === "Approved")
-      .reduce((sum, item) => sum + parseFloat(item.total), 0);
 
     worksheet.addRow(["Total Requests:", filteredData.length]);
     worksheet.addRow([
@@ -142,7 +199,10 @@ function ReportExport() {
       "Rejected:",
       filteredData.filter((item) => item.status === "Rejected").length,
     ]);
-    worksheet.addRow(["Total Amount:", `₱${totalAmount.toFixed(2)}`]);
+    
+    // Add total amount with formatting
+    const totalAmountRow = worksheet.addRow(["Total Amount:", totalAmount]);
+    totalAmountRow.getCell(2).numFmt = '₱#,##0.00';
 
     // Generate and save file
     const buffer = await workbook.xlsx.writeBuffer();
@@ -414,7 +474,7 @@ function ReportExport() {
                       color: "primary.contrastText",
                     }}
                   >
-                    Date
+                    ID
                   </TableCell>
                   <TableCell
                     sx={{
@@ -423,7 +483,16 @@ function ReportExport() {
                       color: "primary.contrastText",
                     }}
                   >
-                    User
+                    Employee
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                    }}
+                  >
+                    SAP Code
                   </TableCell>
                   <TableCell
                     sx={{
@@ -441,7 +510,7 @@ function ReportExport() {
                       color: "primary.contrastText",
                     }}
                   >
-                    Description
+                    Subject
                   </TableCell>
                   <TableCell
                     sx={{
@@ -460,7 +529,7 @@ function ReportExport() {
                       color: "primary.contrastText",
                     }}
                   >
-                    Status
+                    Dates
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -471,29 +540,35 @@ function ReportExport() {
                     hover
                     sx={{ '&:nth-of-type(odd)': { bgcolor: 'action.hover' } }}
                   >
-                    <TableCell>{item.createdAt || "N/A"}</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>{item.user.name || "Unknown"}</TableCell>
+                    <TableCell sx={{ fontFamily: 'monospace' }}>{item.id}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {item.user?.name || "Unknown"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.user?.role || "N/A"}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ fontFamily: 'monospace' }}>{item.sapCode || item.sap_code || "N/A"}</TableCell>
                     <TableCell>{item.category || item.type || "N/A"}</TableCell>
                     <TableCell>
-                      {item.description?.substring(0, 50)}
-                      {item.description?.length > 50 ? "..." : ""}
+                      {item.items?.substring(0, 40) || "N/A"}
+                      {item.items?.length > 40 ? "..." : ""}
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 600 }}>
                       ₱{parseFloat(item.total).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={item.status}
-                        size="small"
-                        color={
-                          item.status === "Approved"
-                            ? "success"
-                            : item.status === "Pending"
-                            ? "warning"
-                            : "error"
-                        }
-                        sx={{ fontWeight: 600 }}
-                      />
+                      <Box>
+                        <Typography variant="caption" display="block">
+                          Expense: {item.date || item.date_of_expense || "N/A"}
+                        </Typography>
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          Submitted: {item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : item.submitted_at ? new Date(item.submitted_at).toLocaleDateString() : "N/A"}
+                        </Typography>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
