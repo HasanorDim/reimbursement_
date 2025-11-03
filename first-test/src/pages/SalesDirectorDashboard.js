@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
-import MonthlyStats from "../components/MonthlyStats.js";
 import UserSettings from "../components/UserSettings.js";
 import SalesDirectorReportExport from "../components/SalesDirectorReportExport.js";
 import ManageSAPCodes from "../components/ManageSAPCodes.js";
@@ -282,12 +281,6 @@ function SalesDirectorDashboard() {
             <ListItemText primary="Manage Users" />
           </ListItemButton>
         </List>
-
-        {drawerOpen && (
-          <Box sx={{ mt: "auto" }}>
-            <MonthlyStats />
-          </Box>
-        )}
       </Drawer>
 
       {/* Main Content */}

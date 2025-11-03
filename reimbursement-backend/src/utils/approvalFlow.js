@@ -1,4 +1,4 @@
-// src/utils/approvalFlow.js
+// reimbursement-backend/src/utils/approvalFlow.js
 
 // Define all possible approval chains based on submitter's role
 const approvalFlows = {

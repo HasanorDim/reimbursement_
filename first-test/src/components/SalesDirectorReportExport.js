@@ -1,3 +1,5 @@
+// first-test/src/components/SalesDirectorReportExport.js
+
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -276,12 +278,13 @@ function SalesDirectorReportExport() {
               <MenuItem value="Rejected">Rejected</MenuItem>
             </TextField>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl component="fieldset" variant="standard">
+
+          <Grid item xs={12}>
+            <FormControl component="fieldset" variant="standard" fullWidth>
               <FormLabel component="legend" sx={{ fontSize: "0.875rem", mb: 1 }}>
                 Submitted By
               </FormLabel>
-              <FormGroup>
+              <FormGroup row>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -340,6 +343,7 @@ function SalesDirectorReportExport() {
               </FormGroup>
             </FormControl>
           </Grid>
+          
         </Grid>
 
         {/* Summary Statistics */}
