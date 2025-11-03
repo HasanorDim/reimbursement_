@@ -1,4 +1,5 @@
 // reimbursement-backend/src/utils/emailTemplates.js
+
 /**
  * Email template for intermediate approval (not final)
  */
@@ -173,8 +174,6 @@ export const rejectionTemplate = (reimbursement, approverName, approverRole, rem
   `;
 };
 
-// Add these functions to your existing emailTemplates.js file
-
 /**
  * Email template for NEW reimbursement submission - sent to FIRST APPROVER
  */
@@ -183,8 +182,9 @@ export const newSubmissionToApproverTemplate = (reimbursement, requester, approv
     <!DOCTYPE html>
     <html>
     <head>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #FF9800; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-top: none; }
@@ -192,8 +192,10 @@ export const newSubmissionToApproverTemplate = (reimbursement, requester, approv
         .action-box { background-color: #fff3e0; padding: 20px; margin: 20px 0; border-radius: 4px; text-align: center; }
         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
         .amount { font-size: 24px; color: #FF9800; font-weight: bold; }
-        .label { font-weight: bold; color: #555; }
-        .button { background-color: #FF9800; color: white; padding: 12px 30px; text-decoration: none; display: inline-block; margin: 10px 0; border-radius: 4px; }
+        .label { font-weight: 600; color: #555; }
+        .button { background-color: #FF9800; color: white; padding: 12px 30px; text-decoration: none; display: inline-block; margin: 10px 0; border-radius: 4px; font-family: 'Poppins', Arial, sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', Arial, sans-serif; }
+        p { font-family: 'Poppins', Arial, sans-serif; }
       </style>
     </head>
     <body>
@@ -207,7 +209,7 @@ export const newSubmissionToApproverTemplate = (reimbursement, requester, approv
           
           <div class="details">
             <p><span class="label">Submitted by:</span> ${requester.name} (${requester.role})</p>
-            <p><span class="label">Request ID:</span> ${reimbursement.sap_code}</p>
+            <p><span class="label">SAP Code:</span> ${reimbursement.sap_code}</p>
             <p><span class="label">Category:</span> ${reimbursement.category}</p>
             <p><span class="label">Amount:</span> <span class="amount">₱${parseFloat(reimbursement.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></p>
             <p><span class="label">Purpose:</span> ${reimbursement.items || 'N/A'}</p>
@@ -242,8 +244,9 @@ export const nextApproverNotificationTemplate = (reimbursement, requester, previ
     <!DOCTYPE html>
     <html>
     <head>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #063679; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-top: none; }
@@ -252,11 +255,10 @@ export const nextApproverNotificationTemplate = (reimbursement, requester, previ
         .action-box { background-color: #bbdefb; padding: 20px; margin: 20px 0; border-radius: 4px; text-align: center; }
         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
         .amount { font-size: 24px; color: #063679; font-weight: bold; }
-        .label { font-weight: bold; color: #555; }
-        .button { background-color: #063679; color: white; padding: 12px 30px; text-decoration: none; display: inline-block; margin: 10px 0; border-radius: 4px; }
-        #reviewapprove { 
-          color: #fafafa !important; 
-        }
+        .label { font-weight: 600; color: #555; }
+        .button { background-color: #063679; color: white; padding: 12px 30px; text-decoration: none; display: inline-block; margin: 10px 0; border-radius: 4px; font-family: 'Poppins', Arial, sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', Arial, sans-serif; }
+        p { font-family: 'Poppins', Arial, sans-serif; }
       </style>
     </head>
     <body>
@@ -275,7 +277,7 @@ export const nextApproverNotificationTemplate = (reimbursement, requester, previ
           
           <div class="details">
             <p><span class="label">Submitted by:</span> ${requester.name} (${requester.role})</p>
-            <p><span class="label">Request ID:</span> ${reimbursement.sap_code}</p>
+            <p><span class="label">SAP Code:</span> ${reimbursement.sap_code}</p>
             <p><span class="label">Category:</span> ${reimbursement.category}</p>
             <p><span class="label">Amount:</span> <span class="amount">₱${parseFloat(reimbursement.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></p>
             <p><span class="label">Purpose:</span> ${reimbursement.items || 'N/A'}</p>
@@ -286,7 +288,7 @@ export const nextApproverNotificationTemplate = (reimbursement, requester, previ
           <div class="action-box">
             <p style="margin: 0 0 15px 0; font-weight: bold;">⏰ Your Approval Needed - Level ${approvalLevel}</p>
             <p style="margin: 0 0 15px 0;">This request is now waiting for your review.</p>
-            <a href="${process.env.CLIENT_URL}/dashboard" class="button" id="reviewapprove">Review & Approve</a>
+            <a href="${process.env.CLIENT_URL}/dashboard" class="button">Review & Approve</a>
           </div>
           
           <p>Please review the complete request details including the receipt and approval history in the ERNIt Back system.</p>
