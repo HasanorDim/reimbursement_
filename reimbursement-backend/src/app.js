@@ -16,6 +16,7 @@ import ocrRoutes from "./routes/ocrRoutes.js";
 import adminRoutes from "./routes/admin.route.js";
 import sapCodeRoutes from "./routes/sapCode.routes.js";
 import { verifyEmailConfig } from "./utils/sendEmail.js"; // Add this import
+import path from "path";
 
 dotenv.config();
 
@@ -95,29 +96,44 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal Server Error" });
 });
 
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  app.get("*", (res, req) => {
+    res.sendFile(path.join(__dirname, "../frontend", "dis", "index.html"));
+  });
+}
+
 // ✅ Enhanced server startup with email verification
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 (async () => {
   try {
     // Check email configuration
     console.log("\n📧 Checking email configuration...");
-    await verifyEmailConfig();
+    // await verifyEmailConfig();
 
     // Sync database
     await sequelize.sync({ alter: false });
     console.log("✅ Database synced successfully");
 
     // Start server - FIXED VERSION
+    // app.listen(PORT, "0.0.0.0", () => {
+    //   console.log(`\n🚀 Server running on port: ${PORT}`);
+    //   console.log(
+    //     `🔑 Microsoft login: https://reimbursement-acu1.onrender.com/auth/microsoft`
+    //   );
+    //   console.log(
+    //     `📧 Email notifications: ${
+    //       process.env.EMAIL_USER ? "✅ Configured" : "❌ Not configured"
+    //     }\n`
+    //   );
+    // });
+
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`\n🚀 Server running on port: ${PORT}`);
       console.log(
         `🔑 Microsoft login: https://reimbursement-acu1.onrender.com/auth/microsoft`
       );
-      console.log(
-        `📧 Email notifications: ${
-          process.env.EMAIL_USER ? "✅ Configured" : "❌ Not configured"
-        }\n`
-      );
+      console.log("📧 Email notifications: ⚠️ Disabled for deployment");
     });
   } catch (err) {
     console.error("❌ Server startup error:", err);
