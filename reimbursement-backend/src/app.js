@@ -102,26 +102,38 @@ app.use((err, req, res, next) => {
 });
 
 if (process.env.NODE_ENV === "production") {
-  const reactBuildPath = path.join(__dirname, "../../first-test/build");
+  try {
+    // Import fs using ES modules
+    const fs = await import("fs");
+    const reactBuildPath = path.join(__dirname, "../../first-test/build");
 
-  // Check if React build exists
-  if (require("fs").existsSync(reactBuildPath)) {
-    console.log("📦 Serving React from:", reactBuildPath);
+    // Check if React build exists using promises
+    const buildExists = await fs.promises
+      .access(reactBuildPath)
+      .then(() => true)
+      .catch(() => false);
 
-    // Serve static files
-    app.use(express.static(reactBuildPath));
+    if (buildExists) {
+      console.log("📦 Serving React from:", reactBuildPath);
 
-    // Catch-all handler - ONLY for non-API routes
-    app.get("*", (req, res, next) => {
-      // Skip API routes
-      if (req.path.startsWith("/api/") || req.path.startsWith("/auth/")) {
-        return next();
-      }
-      // Serve React for all other routes
-      res.sendFile(path.join(reactBuildPath, "index.html"));
-    });
-  } else {
-    console.log("❌ React build not found at:", reactBuildPath);
+      // Serve static files
+      app.use(express.static(reactBuildPath));
+
+      // Catch-all handler - ONLY for non-API routes
+      app.get("*", (req, res, next) => {
+        // Skip API routes
+        if (req.path.startsWith("/api/") || req.path.startsWith("/auth/")) {
+          return next();
+        }
+        // Serve React for all other routes
+        res.sendFile(path.join(reactBuildPath, "index.html"));
+      });
+    } else {
+      console.log("❌ React build not found at:", reactBuildPath);
+      console.log("💡 Run: cd first-test && npm run build");
+    }
+  } catch (error) {
+    console.log("❌ Error setting up React serving:", error.message);
   }
 }
 
