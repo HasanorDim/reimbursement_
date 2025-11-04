@@ -102,16 +102,27 @@ app.use((err, req, res, next) => {
 });
 
 if (process.env.NODE_ENV === "production") {
-  console.log("📦 Serving React frontend from backend");
+  const reactBuildPath = path.join(__dirname, "../../first-test/build");
 
-  // Serve static files from React build
-  app.use(express.static(path.join(__dirname, "../../first-test/build")));
+  // Check if React build exists
+  if (require("fs").existsSync(reactBuildPath)) {
+    console.log("📦 Serving React from:", reactBuildPath);
 
-  // Handle client-side routing - USE REGEX TO AVOID PATH-TO-REGEXP ERROR
-  app.get(/^(?!\/api|\/auth).*$/, (req, res) => {
-    console.log(`🎯 Serving React for route: ${req.path}`);
-    res.sendFile(path.join(__dirname, "../../first-test/build", "index.html"));
-  });
+    // Serve static files
+    app.use(express.static(reactBuildPath));
+
+    // Catch-all handler - ONLY for non-API routes
+    app.get("*", (req, res, next) => {
+      // Skip API routes
+      if (req.path.startsWith("/api/") || req.path.startsWith("/auth/")) {
+        return next();
+      }
+      // Serve React for all other routes
+      res.sendFile(path.join(reactBuildPath, "index.html"));
+    });
+  } else {
+    console.log("❌ React build not found at:", reactBuildPath);
+  }
 }
 
 // ✅ Enhanced server startup with email verification
