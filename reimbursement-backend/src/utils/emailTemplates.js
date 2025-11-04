@@ -118,7 +118,7 @@ export const finalApprovalTemplate = (reimbursement, approverName, approverRole)
 /**
  * Email template for rejection
  */
-export const rejectionTemplate = (reimbursement, approverName, approverRole, remarks, approvalLevel) => {
+export const rejectionTemplate = (reimbursement, requesterName, approverName, approverRole, remarks, approvalLevel) => {
   return `
     <!DOCTYPE html>
     <html>
@@ -144,7 +144,7 @@ export const rejectionTemplate = (reimbursement, approverName, approverRole, rem
           <h1>❌ Reimbursement Rejected at Level ${approvalLevel}</h1>
         </div>
         <div class="content">
-          <p>Good day,</p>
+          <p>Good day ${requesterName},</p>
           <p>Unfortunately, your reimbursement request has been <strong>rejected</strong>.</p>
           
           <div class="details">
@@ -153,7 +153,7 @@ export const rejectionTemplate = (reimbursement, approverName, approverRole, rem
             <p><span class="label">Amount:</span> <span class="amount">₱${parseFloat(reimbursement.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></p>
             <p><span class="label">Description:</span> ${reimbursement.items || reimbursement.description || 'N/A'}</p>
             <p><span class="label">Date of Expense:</span> ${reimbursement.date_of_expense ? new Date(reimbursement.date_of_expense).toLocaleDateString() : 'N/A'}</p>
-            <p><span class="label">Rejected by:</span> ${approverRole}</p>
+            <p><span class="label">Rejected by:</span> ${approverName} (${approverRole})</p>
           </div>
           
           <div class="remarks-box">
