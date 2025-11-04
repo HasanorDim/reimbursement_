@@ -153,7 +153,7 @@ export const rejectionTemplate = (reimbursement, approverName, approverRole, rem
             <p><span class="label">Amount:</span> <span class="amount">₱${parseFloat(reimbursement.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></p>
             <p><span class="label">Description:</span> ${reimbursement.items || reimbursement.description || 'N/A'}</p>
             <p><span class="label">Date of Expense:</span> ${reimbursement.date_of_expense ? new Date(reimbursement.date_of_expense).toLocaleDateString() : 'N/A'}</p>
-            <p><span class="label">Rejected by:</span> ${approverName} (${approverRole})</p>
+            <p><span class="label">Rejected by:</span> ${approverRole}</p>
           </div>
           
           <div class="remarks-box">
