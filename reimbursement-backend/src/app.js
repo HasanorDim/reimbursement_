@@ -24,6 +24,10 @@ dotenv.config();
 const app = express();
 app.set("trust proxy", 1);
 
+// Fix __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // ✅ Cookie parser first
 app.use(cookieParser());
 
@@ -62,9 +66,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // ✅ Debug log for /auth routes
 app.use((req, res, next) => {
   if (req.path.startsWith("/auth/")) {
@@ -100,15 +101,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal Server Error" });
 });
 
-// if (process.env.NODE_ENV === "production") {
-//   // Serve static files from React build
-//   app.use(express.static(path.join(__dirname, "../../first-test/build")));
+if (process.env.NODE_ENV === "production") {
+  console.log("📦 Serving React frontend from backend");
 
-//   // Handle client-side routing - FIXED: use "/*" instead of "*"
-//   app.get("/*", (req, res) => {
-//     res.sendFile(path.join(__dirname, "../../first-test/build", "index.html"));
-//   });
-// }
+  // Serve static files from React build
+  app.use(express.static(path.join(__dirname, "../../first-test/build")));
+
+  // Handle client-side routing - USE REGEX TO AVOID PATH-TO-REGEXP ERROR
+  app.get(/^(?!\/api|\/auth).*$/, (req, res) => {
+    console.log(`🎯 Serving React for route: ${req.path}`);
+    res.sendFile(path.join(__dirname, "../../first-test/build", "index.html"));
+  });
+}
 
 // ✅ Enhanced server startup with email verification
 const PORT = process.env.PORT || 4000;
