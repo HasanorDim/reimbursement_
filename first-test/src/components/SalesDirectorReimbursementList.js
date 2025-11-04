@@ -28,6 +28,7 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  Pagination,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -52,6 +53,9 @@ function SalesDirectorReimbursementList() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,6 +83,7 @@ function SalesDirectorReimbursementList() {
   // Apply all filters whenever any filter changes
   useEffect(() => {
     applyAllFilters();
+    setPage(1);
   }, [pendings, searchTerm, statusFilter, categoryFilter, roleFilters]);
 
   const fetchReimbursements = async () => {
@@ -421,6 +426,15 @@ function SalesDirectorReimbursementList() {
     return date.toLocaleDateString("en-CA");
   };
 
+  const totalPages = Math.ceil(filteredPendings.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPendings = filteredPendings.slice(startIndex, endIndex);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
       <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3 }}>
@@ -580,20 +594,21 @@ function SalesDirectorReimbursementList() {
       </Box>
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-          <CircularProgress />
-        </Box>
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : filteredPendings.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography color="text.secondary">
-            {pendings.length === 0
-              ? "No pending approvals at this time"
-              : "No requests match your search criteria"}
-          </Typography>
-        </Box>
-      ) : (
+  <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+    <CircularProgress />
+  </Box>
+) : error ? (
+  <Alert severity="error">{error}</Alert>
+) : filteredPendings.length === 0 ? (
+  <Box sx={{ textAlign: "center", py: 4 }}>
+    <Typography color="text.secondary">
+      {pendings.length === 0
+        ? "No pending approvals at this time"
+        : "No requests match your search criteria"}
+    </Typography>
+  </Box>
+) : (
+  <>
         <TableContainer>
           <Table>
             <TableHead>
@@ -608,8 +623,8 @@ function SalesDirectorReimbursementList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredPendings.map((item) => (
-                <TableRow key={item.id} hover>
+               {paginatedPendings.map((item) => (
+                  <TableRow key={item.id} hover>
                   <TableCell>
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: "medium" }}>
@@ -676,7 +691,23 @@ function SalesDirectorReimbursementList() {
             </TableBody>
           </Table>
         </TableContainer>
+      
+        {/*Pagination*/}
+         {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
+        </>
       )}
+      
 
       {/* Details Dialog */}
       <Dialog

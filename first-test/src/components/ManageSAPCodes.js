@@ -19,6 +19,7 @@ import {
   CircularProgress,
   Chip,
   MenuItem,
+  Pagination,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -45,17 +46,36 @@ function ManageSAPCodes() {
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
   // Fetch SAP codes on mount
   useEffect(() => {
     fetchSapCodes();
   }, [fetchSapCodes]);
 
-  // Filter SAP codes
+  // Filter SAP codes and reset page when search changes
   const filteredCodes = sapCodes.filter(
     (code) =>
       code.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       code.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCodes.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCodes = filteredCodes.slice(startIndex, endIndex);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
 
   // Validate SAP code format
   const validateSapCode = (code) => {
@@ -205,82 +225,98 @@ function ManageSAPCodes() {
 
         {/* SAP Codes List */}
         {!loading && filteredCodes.length > 0 && (
-          <Paper sx={{ border: 1, borderColor: "divider" }}>
-            <List>
-              {filteredCodes.map((code, index) => (
-                <React.Fragment key={code.id}>
-                  <ListItem
-                    sx={{
-                      py: 2,
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                      },
-                    }}
-                    secondaryAction={
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        <IconButton
-                          edge="end"
-                          aria-label="edit"
-                          color="primary"
-                          onClick={() => handleEditClick(code)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          edge="end"
-                          aria-label="delete"
-                          color="error"
-                          onClick={() => handleDeleteClick(code)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    }
-                  >
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            {code.name}
-                          </Typography>
-                          <Chip
-                            label={code.status}
-                            size="small"
-                            color={getStatusColor(code.status)}
-                            sx={{ height: 20 }}
-                          />
+          <>
+            <Paper sx={{ border: 1, borderColor: "divider" }}>
+              <List>
+                {paginatedCodes.map((code, index) => (
+                  <React.Fragment key={code.id}>
+                    <ListItem
+                      sx={{
+                        py: 2,
+                        "&:hover": {
+                          bgcolor: "action.hover",
+                        },
+                      }}
+                      secondaryAction={
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <IconButton
+                            edge="end"
+                            aria-label="edit"
+                            color="primary"
+                            onClick={() => handleEditClick(code)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            edge="end"
+                            aria-label="delete"
+                            color="error"
+                            onClick={() => handleDeleteClick(code)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
                         </Box>
                       }
-                      secondary={
-                        <Box sx={{ mt: 0.5 }}>
-                          <Typography
-                            variant="body2"
-                            color="primary"
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {code.code}
-                          </Typography>
-                          {code.description && (
+                    >
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                              {code.name}
+                            </Typography>
+                            <Chip
+                              label={code.status}
+                              size="small"
+                              color={getStatusColor(code.status)}
+                              sx={{ height: 20 }}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box sx={{ mt: 0.5 }}>
                             <Typography
                               variant="body2"
-                              color="text.secondary"
-                              sx={{ mt: 0.5 }}
+                              color="primary"
+                              sx={{ fontWeight: 500 }}
                             >
-                              {code.description}
+                              {code.code}
                             </Typography>
-                          )}
-                          <Typography variant="caption" color="text.secondary">
-                            Created: {new Date(code.createdAt).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                  {index < filteredCodes.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </Paper>
+                            {code.description && (
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mt: 0.5 }}
+                              >
+                                {code.description}
+                              </Typography>
+                            )}
+                            <Typography variant="caption" color="text.secondary">
+                              Created: {new Date(code.createdAt).toLocaleDateString()}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                    {index < paginatedCodes.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </Paper>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+              </Box>
+            )}
+          </>
         )}
 
         {/* Empty State */}

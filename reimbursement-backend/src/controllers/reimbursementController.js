@@ -253,7 +253,8 @@ export async function getUserReimbursements(req, res) {
 }
 
 /**
- * Get reimbursements pending the current user's approval (with SAP code filtering)
+ * Get reimbursements for the current user's approval level (with SAP code filtering)
+ * Shows Pending, Approved, and Rejected reimbursements at their level
  */
 export async function getPendingApprovals(req, res) {
   try {
@@ -262,28 +263,10 @@ export async function getPendingApprovals(req, res) {
       return res.status(401).json({ error: "User not authenticated" });
     }
 
-    console.log("🔍 Fetching pending approvals for role:", user.role);
+    console.log("🔍 Fetching approvals for role:", user.role);
 
-    const whereClause = {
-      current_approver: user.role,
-      status: "Pending",
-    };
-
-    // ✅ If user is SUL or Account Manager, filter by SAP code
-    if (["SUL", "Account Manager"].includes(user.role)) {
-      const userSapCodes = [user.sap_code_1, user.sap_code_2].filter(Boolean);
-      
-      if (userSapCodes.length === 0) {
-        console.log("⚠️ User has no SAP codes assigned");
-        return res.json([]);
-      }
-      
-      whereClause.sap_code = userSapCodes;
-      console.log("🔍 Filtering by SAP codes:", userSapCodes);
-    }
-
-    const reimbursements = await Reimbursement.findAll({
-      where: whereClause,
+    // Find all reimbursements where the user's role appears in the approval flow
+    const allReimbursements = await Reimbursement.findAll({
       include: [
         {
           model: User,
@@ -305,9 +288,29 @@ export async function getPendingApprovals(req, res) {
       order: [["createdAt", "DESC"]],
     });
 
-    console.log(`✅ Found ${reimbursements.length} pending approvals`);
+    // Filter reimbursements where user's role is in the approval chain
+    let filteredReimbursements = allReimbursements.filter(r => {
+      return r.approvals.some(a => a.approver_role === user.role);
+    });
 
-    const formatted = reimbursements.map((r) => ({
+    // ✅ If user is SUL or Account Manager, filter by SAP code
+    if (["SUL", "Account Manager"].includes(user.role)) {
+      const userSapCodes = [user.sap_code_1, user.sap_code_2].filter(Boolean);
+      
+      if (userSapCodes.length === 0) {
+        console.log("⚠️ User has no SAP codes assigned");
+        return res.json([]);
+      }
+      
+      filteredReimbursements = filteredReimbursements.filter(r => 
+        userSapCodes.includes(r.sap_code)
+      );
+      console.log("🔍 Filtering by SAP codes:", userSapCodes);
+    }
+
+    console.log(`✅ Found ${filteredReimbursements.length} reimbursements at this approval level`);
+
+    const formatted = filteredReimbursements.map((r) => ({
       id: r.id,
       userId: r.user_id,
       user: r.user
@@ -359,7 +362,7 @@ export async function getPendingAllApprovals(req, res) {
 
     const whereClause = {
       // current_approver: user.role,
-      status: ["Pending"],
+      status: ["Pending", "Approved", "Rejected"],
     };
 
     // ✅ If user is SUL or Account Manager, DON'T filter by SAP code - get ALL data

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -26,6 +27,7 @@ import {
   TextField,
   MenuItem,
   InputAdornment,
+  Pagination,
 } from "@mui/material";
 import {
   CheckCircle as CheckCircleIcon,
@@ -57,6 +59,10 @@ function StatusTracker() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
   // Receipt viewer state
   const [receiptZoom, setReceiptZoom] = useState(1);
   const [receiptLoading, setReceiptLoading] = useState(false);
@@ -75,6 +81,7 @@ function StatusTracker() {
   // Apply all filters whenever any filter changes
   useEffect(() => {
     applyAllFilters();
+    setPage(1); // Reset to first page when filters change
   }, [reimbursements, searchTerm, statusFilter, categoryFilter]);
 
   const fetchUserReimbursements = async () => {
@@ -147,12 +154,10 @@ function StatusTracker() {
 
   const handleSearch = (searchValue) => {
     setSearchTerm(searchValue);
-    // Filters will be applied automatically by useEffect
   };
 
   const handleStatusFilter = (searchValue) => {
     setStatusFilter(searchValue);
-    // Clear search when changing status filter for better UX
     if (searchValue !== "All Status") {
       setSearchTerm("");
     }
@@ -160,7 +165,6 @@ function StatusTracker() {
 
   const handleCategoryFilter = (searchValue) => {
     setCategoryFilter(searchValue);
-    // Clear search when changing category filter for better UX
     if (searchValue !== "All Categories") {
       setSearchTerm("");
     }
@@ -171,10 +175,6 @@ function StatusTracker() {
   };
 
   const getUniqueCategories = () => {
-    // const categories = [
-    //   ...new Set(reimbursements.map((item) => item.category)),
-    // ];
-    // return ["All Categories", ...categories];
     return [
       "All Categories",
       "Transportation (Commute)",
@@ -197,19 +197,16 @@ function StatusTracker() {
     setReceiptZoom(1);
   };
 
-  // Receipt zoom controls
   const handleZoomIn = () => setReceiptZoom((prev) => Math.min(prev + 0.25, 3));
   const handleZoomOut = () =>
     setReceiptZoom((prev) => Math.max(prev - 0.25, 0.5));
 
-  // Download receipt
   const handleDownloadReceipt = () => {
     if (!selectedTicket?.receipt) return;
 
     try {
       const { data, mimetype, filename } = selectedTicket.receipt;
 
-      // Convert base64 to blob
       const byteCharacters = atob(data);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -218,7 +215,6 @@ function StatusTracker() {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: mimetype });
 
-      // Create download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -248,13 +244,11 @@ function StatusTracker() {
     }
   };
 
-  // Build approval flow from actual approval records
   const getApprovalFlow = (ticket) => {
     if (!ticket.approvals || ticket.approvals.length === 0) {
       return [];
     }
 
-    // Sort approvals by level (reverse for display - latest first)
     const sortedApprovals = [...ticket.approvals].sort(
       (a, b) => b.approval_level - a.approval_level
     );
@@ -271,7 +265,6 @@ function StatusTracker() {
     }));
   };
 
-  // Get active step for stepper
   const getActiveStep = (approvals) => {
     if (!approvals || approvals.length === 0) return 0;
 
@@ -283,7 +276,6 @@ function StatusTracker() {
     );
 
     if (pendingIndex === -1) {
-      // All approved or rejected
       return sortedApprovals.length;
     }
 
@@ -303,10 +295,19 @@ function StatusTracker() {
   const theme = useTheme();
   const { darkMode } = useAppContext();
 
-  // Format date for display
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-CA");
+  };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredReimbursements.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedReimbursements = filteredReimbursements.slice(startIndex, endIndex);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
   };
 
   return (
@@ -383,7 +384,6 @@ function StatusTracker() {
           ))}
         </TextField>
 
-        {/* Results count */}
         <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
           {filteredReimbursements.length} requests found
         </Typography>
@@ -404,79 +404,95 @@ function StatusTracker() {
           </Typography>
         </Box>
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>REQUEST</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>AMOUNT</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>CATEGORY</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>DATES</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>STATUS</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredReimbursements.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                        {item.items || `${item.category} Reimbursement`}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.description || "No description provided"}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                      ₱
-                      {parseFloat(item.total).toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{item.category}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body2">
-                        {item.submittedAt
-                          ? formatDate(item.submittedAt)
-                          : "N/A"}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Submitted: {formatDate(item.submittedAt)}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={item.status}
-                      size="small"
-                      color={getStatusColor(item.status)}
-                      sx={{
-                        fontWeight: 600,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenDetails(item)}
-                      title="See Details"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                  </TableCell>
+        <>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: "bold" }}>REQUEST</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>AMOUNT</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>CATEGORY</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>DATES</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>STATUS</TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {paginatedReimbursements.map((item) => (
+                  <TableRow key={item.id} hover>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                          {item.items || `${item.category} Reimbursement`}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.description || "No description provided"}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                        ₱
+                        {parseFloat(item.total).toLocaleString("en-PH", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">{item.category}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2">
+                          {item.submittedAt
+                            ? formatDate(item.submittedAt)
+                            : "N/A"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Submitted: {formatDate(item.submittedAt)}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={item.status}
+                        size="small"
+                        color={getStatusColor(item.status)}
+                        sx={{
+                          fontWeight: 600,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenDetails(item)}
+                        title="See Details"
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
+        </>
       )}
 
       {/* Details Dialog - Rest of your existing dialog code remains the same */}

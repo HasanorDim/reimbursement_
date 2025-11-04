@@ -25,6 +25,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Pagination,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -55,6 +56,10 @@ function ReimbursementList() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
   const [remarks, setRemarks] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [receiptZoom, setReceiptZoom] = useState(1);
@@ -68,6 +73,7 @@ function ReimbursementList() {
   // Apply all filters whenever any filter changes
   useEffect(() => {
     applyAllFilters();
+    setPage(1); // Reset to first page when filters change
   }, [pendings, searchTerm, statusFilter, categoryFilter]);
 
   const fetchReimbursements = async () => {
@@ -149,7 +155,6 @@ function ReimbursementList() {
   // Status filter handler
   const handleStatusFilter = (searchValue) => {
     setStatusFilter(searchValue);
-    // Clear search when changing status filter for better UX
     if (searchValue !== "All Status") {
       setSearchTerm("");
     }
@@ -158,7 +163,6 @@ function ReimbursementList() {
   // Category filter handler
   const handleCategoryFilter = (searchValue) => {
     setCategoryFilter(searchValue);
-    // Clear search when changing category filter for better UX
     if (searchValue !== "All Categories") {
       setSearchTerm("");
     }
@@ -374,10 +378,20 @@ function ReimbursementList() {
     return date.toLocaleDateString("en-CA");
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPendings.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPendings = filteredPendings.slice(startIndex, endIndex);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
       <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3 }}>
-        Pending Approvals - {user?.role}
+        Reimbursement List - {user?.role}
       </Typography>
 
       {/* Search and Filter Section */}
@@ -448,7 +462,6 @@ function ReimbursementList() {
           ))}
         </TextField>
 
-        {/* Results count */}
         <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
           {filteredPendings.length} requests found
         </Typography>
@@ -469,88 +482,104 @@ function ReimbursementList() {
           </Typography>
         </Box>
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>EMPLOYEE</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>REQUEST</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>AMOUNT</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>CATEGORY</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>DATES</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>STATUS</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredPendings.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                        {item.user?.name || "Unknown"}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.user?.role || "Unknown Role"}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                        {item.items || `${item.category} Reimbursement`}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.description || "No description provided"}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                      ₱
-                      {parseFloat(item.total).toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{item.category}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body2">
-                        {item.date ? formatDate(item.date) : "N/A"}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Submitted: {formatDate(item.submittedAt)}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={item.status}
-                      size="small"
-                      color={getStatusColor(item.status)}
-                      sx={{
-                        fontWeight: 600,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenDetails(item)}
-                      title="View Details"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                  </TableCell>
+        <>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: "bold" }}>EMPLOYEE</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>REQUEST</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>AMOUNT</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>CATEGORY</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>DATES</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>STATUS</TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {paginatedPendings.map((item) => (
+                  <TableRow key={item.id} hover>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                          {item.user?.name || "Unknown"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.user?.role || "Unknown Role"}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                          {item.items || `${item.category} Reimbursement`}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.description || "No description provided"}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                        ₱
+                        {parseFloat(item.total).toLocaleString("en-PH", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">{item.category}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2">
+                          {item.date ? formatDate(item.date) : "N/A"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Submitted: {formatDate(item.submittedAt)}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={item.status}
+                        size="small"
+                        color={getStatusColor(item.status)}
+                        sx={{
+                          fontWeight: 600,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenDetails(item)}
+                        title="View Details"
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
+        </>
       )}
 
       {/* Details Dialog */}

@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Pagination,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -38,7 +39,6 @@ function ManageUsers() {
   const { users, loading, fetchUsers, updateUser, deleteUser } =
     useManageUsersStore();
 
-  // ✅ Fetch ONLY active SAP codes
   const { sapCodes, fetchActiveSapCodes } = useManageSapCodesStore();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,7 +53,10 @@ function ManageUsers() {
   });
   const [formErrors, setFormErrors] = useState({});
 
-  // ✅ Fetch users and active SAP codes on mount
+  // Pagination state - 10 items per page for users
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     fetchUsers();
     fetchActiveSapCodes();
@@ -67,6 +70,21 @@ function ManageUsers() {
     const matchesRole = roleFilter === "All" || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, roleFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
 
   // Roles configuration
   const roles = [
@@ -116,17 +134,16 @@ function ManageUsers() {
     setFormErrors({});
   };
 
-  // Regex validation
   const validateSapCode = (code) => {
     if (!code) return true;
     const sapCodeRegex = /^E-\d{5}-\d{4}$/i;
     return sapCodeRegex.test(code);
   };
 
-  // Submit update
   const handleSubmitEdit = async () => {
     const errors = {};
 
+    // Only validate SAP code format if a code is provided (not empty string)
     if (!rolesWithoutSapCodes.includes(formData.role)) {
       if (formData.sap_code_1 && !validateSapCode(formData.sap_code_1)) {
         errors.sap_code_1 = "Invalid format. Use: E-00000-0000";
@@ -139,6 +156,8 @@ function ManageUsers() {
       ) {
         errors.sap_code_2 = "Invalid format. Use: E-00000-0000";
       }
+
+      // Note: We allow empty SAP codes now, so user can remove them
     }
 
     if (Object.keys(errors).length > 0) {
@@ -226,120 +245,136 @@ function ManageUsers() {
 
         {/* Users Table */}
         {!loading && filteredUsers.length > 0 && (
-          <TableContainer
-            component={Paper}
-            sx={{ border: 1, borderColor: "divider" }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "action.hover" }}>
-                  <TableCell sx={{ fontWeight: "bold" }}>User</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>Role</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>SAP Code(s)</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }} align="right">
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredUsers.map((user) => {
-                  const userSapCodes = [];
-                  if (user.sap_code_1) userSapCodes.push(user.sap_code_1);
-                  if (user.sap_code_2) userSapCodes.push(user.sap_code_2);
+          <>
+            <TableContainer
+              component={Paper}
+              sx={{ border: 1, borderColor: "divider" }}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "action.hover" }}>
+                    <TableCell sx={{ fontWeight: "bold" }}>User</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }}>SAP Code(s)</TableCell>
+                    <TableCell sx={{ fontWeight: "bold" }} align="right">
+                      Actions
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedUsers.map((user) => {
+                    const userSapCodes = [];
+                    if (user.sap_code_1) userSapCodes.push(user.sap_code_1);
+                    if (user.sap_code_2) userSapCodes.push(user.sap_code_2);
 
-                  return (
-                    <TableRow key={user.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                        >
-                          <Avatar
-                            src={user.profilePicture}
-                            sx={{
-                              bgcolor: "primary.main",
-                              width: 40,
-                              height: 40,
-                            }}
+                    return (
+                      <TableRow key={user.id} hover>
+                        <TableCell>
+                          <Box
+                            sx={{ display: "flex", alignItems: "center", gap: 2 }}
                           >
-                            {user.name.charAt(0)}
-                          </Avatar>
-                          <Typography sx={{ fontWeight: 500 }}>
-                            {user.name}
+                            <Avatar
+                              src={user.profilePicture}
+                              sx={{
+                                bgcolor: "primary.main",
+                                width: 40,
+                                height: 40,
+                              }}
+                            >
+                              {user.name.charAt(0)}
+                            </Avatar>
+                            <Typography sx={{ fontWeight: 500 }}>
+                              {user.name}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {user.email}
                           </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {user.email}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.role}
-                          size="small"
-                          color={getRoleColor(user.role)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {userSapCodes.length > 0 ? (
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.role}
+                            size="small"
+                            color={getRoleColor(user.role)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {userSapCodes.length > 0 ? (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                gap: 0.5,
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              {userSapCodes.map((code, index) => (
+                                <Chip
+                                  key={index}
+                                  label={code}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              ))}
+                            </Box>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                            >
+                              {rolesWithoutSapCodes.includes(user.role)
+                                ? "N/A"
+                                : "Not assigned"}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
                           <Box
                             sx={{
                               display: "flex",
-                              gap: 0.5,
-                              flexWrap: "wrap",
+                              gap: 1,
+                              justifyContent: "flex-end",
                             }}
                           >
-                            {userSapCodes.map((code, index) => (
-                              <Chip
-                                key={index}
-                                label={code}
-                                size="small"
-                                variant="outlined"
-                              />
-                            ))}
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handleEditClick(user)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteClick(user)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
                           </Box>
-                        ) : (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            {rolesWithoutSapCodes.includes(user.role)
-                              ? "N/A"
-                              : "Not assigned"}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box
-                          sx={{
-                            display: "flex",
-                            gap: 1,
-                            justifyContent: "flex-end",
-                          }}
-                        >
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEditClick(user)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteClick(user)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
+              </Box>
+            )}
+          </>
         )}
 
         {/* Empty State */}
@@ -374,7 +409,7 @@ function ManageUsers() {
           </Box>
         )}
 
-        {/* ✅ Edit Dialog */}
+        {/* Edit Dialog */}
         <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
           <DialogTitle sx={{display:"flex", justifyContent:"space-between"}}>
             <Typography variant="h6">Edit User</Typography>
@@ -419,7 +454,6 @@ function ManageUsers() {
                   ))}
                 </TextField>
 
-                {/* ✅ Only active SAP codes shown */}
                 {roleRequiresSapCode && (
                   <>
                     <TextField
@@ -432,8 +466,11 @@ function ManageUsers() {
                       fullWidth
                       required
                       error={!!formErrors.sap_code_1}
-                      helperText={formErrors.sap_code_1 || ""}
+                      helperText={formErrors.sap_code_1 || "Select a SAP code or choose 'None' to remove"}
                     >
+                      <MenuItem value="">
+                        <em>None (Remove SAP Code)</em>
+                      </MenuItem>
                       {sapCodes.map((code) => (
                         <MenuItem key={code.id} value={code.code}>
                           {code.code} – {code.name}
@@ -451,9 +488,11 @@ function ManageUsers() {
                         }
                         fullWidth
                         error={!!formErrors.sap_code_2}
-                        helperText={formErrors.sap_code_2 || ""}
+                        helperText={formErrors.sap_code_2 || "Select a second SAP code or leave as 'None'"}
                       >
-                        <MenuItem value="">None</MenuItem>
+                        <MenuItem value="">
+                          <em>None</em>
+                        </MenuItem>
                         {sapCodes.map((code) => (
                           <MenuItem key={code.id} value={code.code}>
                             {code.code} – {code.name}

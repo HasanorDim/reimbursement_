@@ -227,23 +227,6 @@ const UserSettings = () => {
                 </Box>
               )}
               
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  py: 1.5,
-                }}
-              >
-                <Typography sx={{ color: "text.secondary" }}>
-                  Account Status
-                </Typography>
-                <Typography
-                  sx={{ color: "success.main", fontWeight: "medium" }}
-                >
-                  Active
-                </Typography>
-              </Box>
             </Box>
           </Paper>
         </Paper>
