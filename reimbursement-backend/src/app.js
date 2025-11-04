@@ -61,6 +61,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
+const __dirname = path.resolve();
+
 // ✅ Debug log for /auth routes
 app.use((req, res, next) => {
   if (req.path.startsWith("/auth/")) {
