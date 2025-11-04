@@ -33,9 +33,9 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // set true when using HTTPS
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      secure: process.env.NODE_ENV === "production", // true in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
@@ -96,7 +96,7 @@ app.use((err, req, res, next) => {
 });
 
 // ✅ Enhanced server startup with email verification
-// const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 (async () => {
   try {
     // Check email configuration
@@ -107,11 +107,11 @@ app.use((err, req, res, next) => {
     await sequelize.sync({ alter: false });
     console.log("✅ Database synced successfully");
 
-    // Start server
-    app.listen(process.env.PORT, () => {
-      console.log(`\n🚀 Server running: http://localhost:${process.env.PORT}`);
+    // Start server - FIXED VERSION
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`\n🚀 Server running on port: ${PORT}`);
       console.log(
-        `🔑 Microsoft login: http://localhost:${process.env.PORT}/auth/microsoft`
+        `🔑 Microsoft login: https://reimbursement-acu1.onrender.com/auth/microsoft`
       );
       console.log(
         `📧 Email notifications: ${
