@@ -1,4 +1,3 @@
-//first-test/src/components/ReceiptUpload.js
 import { useTheme } from '@mui/material/styles';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../App';
@@ -15,6 +14,8 @@ import {
   IconButton,
   Paper,
   Alert,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 import {
   CloudUpload,
@@ -40,6 +41,7 @@ function ReceiptUpload() {
     sap_code: '',
   });
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [errors, setErrors] = useState({});
   const [availableSapCodes, setAvailableSapCodes] = useState([]);
@@ -252,7 +254,7 @@ function ReceiptUpload() {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
 
     try {
       // Create FormData for multipart upload
@@ -308,7 +310,7 @@ function ReceiptUpload() {
       console.error('Error submitting reimbursement:', err);
       showNotification(err.message || 'Failed to submit reimbursement', 'error');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -320,266 +322,289 @@ function ReceiptUpload() {
   };
 
   return (
-    <Card>
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
-          Upload Receipt for Reimbursement
-        </Typography>
+    <>
+      <Card>
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
+            Upload Receipt for Reimbursement
+          </Typography>
 
-        {availableSapCodes.length === 0 && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            No SAP codes assigned to your account. Please contact your administrator.
-          </Alert>
-        )}
+          {availableSapCodes.length === 0 && (
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              No SAP codes assigned to your account. Please contact your administrator.
+            </Alert>
+          )}
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Paper
-              sx={{
-                p: 3,
-                border: 2,
-                borderStyle: 'dashed',
-                borderColor: errors.image ? 'error.main' : 'divider',
-                borderRadius: 2,
-                textAlign: 'center',
-                bgcolor: 'action.hover',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  bgcolor: 'action.selected',
-                },
-              }}
-            >
-              {imagePreview ? (
-                <Box>
-                  <Box sx={{ position: 'relative', mb: 2 }}>
-                    <img
-                      src={imagePreview}
-                      alt="Receipt preview"
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '400px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      }}
-                      onError={() => showNotification('Failed to load image preview', 'error')}
-                    />
-                    <IconButton
-                      onClick={handleClearImage}
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        bgcolor: 'background.paper',
-                        '&:hover': { bgcolor: 'background.default' },
-                      }}
-                    >
-                      <Delete color="error" />
-                    </IconButton>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-                    <Button
-                      variant="contained"
-                      startIcon={loading ? <Refresh /> : <ImageIcon />}
-                      onClick={handleOCR}
-                      disabled={loading}
-                      color="primary"
-                    >
-                      {loading ? 'Processing...' : 'Extract Text (OCR)'}
-                    </Button>
-                  </Box>
-                  {loading && (
-                    <Box sx={{ mt: 2 }}>
-                      <LinearProgress variant="determinate" value={ocrProgress} />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                        {ocrProgress}% Complete
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              ) : (
-                <label htmlFor="receipt-upload" style={{ cursor: 'pointer', display: 'block' }}>
-                  <input
-                    id="receipt-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    style={{ display: 'none' }}
-                  />
-                  <CloudUpload sx={{ 
-                    fontSize: 64, 
-                    color: theme.palette.mode === 'dark' ? theme.palette.primary.light : '#00387e', 
-                    mb: 2 
-                  }} />
-                  <Typography variant="h6" sx={{ mb: 1 }}>
-                    Click to Upload Receipt
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Supported formats: JPG, PNG, JPEG (Max 5MB)
-                  </Typography>
-                </label>
-              )}
-              {errors.image && (
-                <Typography variant="caption" sx={{ color: 'error.main', mt: 1, display: 'block' }}>
-                  {errors.image}
-                </Typography>
-              )}
-            </Paper>
-
-            {extractedText && (
-              <Paper sx={{ mt: 2, p: 2, bgcolor: 'action.hover' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                  Extracted Text:
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    maxHeight: 150,
-                    overflow: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'monospace',
-                    fontSize: '0.75rem',
-                  }}
-                >
-                  {extractedText}
-                </Typography>
-              </Paper>
-            )}
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              <TextField
-                select
-                label="SAP Code *"
-                name="sap_code"
-                value={formData.sap_code}
-                onChange={handleChange}
-                fullWidth
-                error={!!errors.sap_code}
-                helperText={errors.sap_code || 'Select the department/project for this expense'}
-                disabled={availableSapCodes.length === 0}
-              >
-                {availableSapCodes.map((code) => (
-                  <MenuItem key={code} value={code}>
-                    {code}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                select
-                label="Category *"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                fullWidth
-                error={!!errors.category}
-                helperText={errors.category}
-              >
-                {categories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                label="Date *"
-                name="date"
-                type="date"
-                value={formData.date}
-                onChange={handleChange}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.date}
-                helperText={errors.date}
-                InputProps={{
-                  sx: {
-                    '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                      filter: theme.palette.mode === 'dark' ? 'invert(1)' : 'none'
-                    }
-                  }
-                }}
-              />
-
-              <TextField
-                label="Merchant/Vendor"
-                name="merchant"
-                value={formData.merchant}
-                onChange={handleChange}
-                fullWidth
-                placeholder="e.g., Grab, Jollibee, Office Depot"
-              />
-
-              <TextField
-                label="Total Amount (₱) *"
-                name="total"
-                type="number"
-                value={formData.total}
-                onChange={handleChange}
-                fullWidth
-                inputProps={{ step: '0.01', min: '0' }}
-                error={!!errors.total}
-                helperText={errors.total}
-              />
-
-              <TextField
-                label="Purpose *"
-                name="items"
-                value={formData.items}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="Purpose of the expense..."
-                error={!!errors.items}
-                helperText={errors.items || 'Explain the business purpose of this expense'}
-              />
-              
-              <TextField
-                label="Description *"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="Description of this reimbursement application..."
-                error={!!errors.description}
-                helperText={errors.description}
-              />
-
-              <Button
-                variant="contained"
-                onClick={handleSubmit}
-                size="large"
-                startIcon={<CheckCircle />}
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Paper
                 sx={{
-                  py: 1.5,
-                  fontWeight: 600,
-                  bgcolor: '#2e7d32',
-                  color: '#fafafa',
+                  p: 3,
+                  border: 2,
+                  borderStyle: 'dashed',
+                  borderColor: errors.image ? 'error.main' : 'divider',
+                  borderRadius: 2,
+                  textAlign: 'center',
+                  bgcolor: 'action.hover',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
                   '&:hover': {
-                    bgcolor: '#1b5e20',
-                  },
-                  '&:disabled': {
-                    bgcolor: 'action.disabledBackground',
-                    color: 'action.disabled',
+                    borderColor: 'primary.main',
+                    bgcolor: 'action.selected',
                   },
                 }}
-                disabled={loading || availableSapCodes.length === 0}
               >
-                {loading ? 'Submitting...' : 'Submit for Approval'}
-              </Button>
-            </Box>
+                {imagePreview ? (
+                  <Box>
+                    <Box sx={{ position: 'relative', mb: 2 }}>
+                      <img
+                        src={imagePreview}
+                        alt="Receipt preview"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '400px',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        }}
+                        onError={() => showNotification('Failed to load image preview', 'error')}
+                      />
+                      <IconButton
+                        onClick={handleClearImage}
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          bgcolor: 'background.paper',
+                          '&:hover': { bgcolor: 'background.default' },
+                        }}
+                      >
+                        <Delete color="error" />
+                      </IconButton>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                      <Button
+                        variant="contained"
+                        startIcon={loading ? <Refresh /> : <ImageIcon />}
+                        onClick={handleOCR}
+                        disabled={loading}
+                        color="primary"
+                      >
+                        {loading ? 'Processing...' : 'Extract Text (OCR)'}
+                      </Button>
+                    </Box>
+                    {loading && (
+                      <Box sx={{ mt: 2 }}>
+                        <LinearProgress variant="determinate" value={ocrProgress} />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                          {ocrProgress}% Complete
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  <label htmlFor="receipt-upload" style={{ cursor: 'pointer', display: 'block' }}>
+                    <input
+                      id="receipt-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      style={{ display: 'none' }}
+                    />
+                    <CloudUpload sx={{ 
+                      fontSize: 64, 
+                      color: theme.palette.mode === 'dark' ? theme.palette.primary.light : '#00387e', 
+                      mb: 2 
+                    }} />
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                      Click to Upload Receipt
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Supported formats: JPG, PNG, JPEG (Max 5MB)
+                    </Typography>
+                  </label>
+                )}
+                {errors.image && (
+                  <Typography variant="caption" sx={{ color: 'error.main', mt: 1, display: 'block' }}>
+                    {errors.image}
+                  </Typography>
+                )}
+              </Paper>
+
+              {extractedText && (
+                <Paper sx={{ mt: 2, p: 2, bgcolor: 'action.hover' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                    Extracted Text:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      maxHeight: 150,
+                      overflow: 'auto',
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    {extractedText}
+                  </Typography>
+                </Paper>
+              )}
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <TextField
+                  select
+                  label="SAP Code *"
+                  name="sap_code"
+                  value={formData.sap_code}
+                  onChange={handleChange}
+                  fullWidth
+                  error={!!errors.sap_code}
+                  helperText={errors.sap_code || 'Select the department/project for this expense'}
+                  disabled={availableSapCodes.length === 0}
+                >
+                  {availableSapCodes.map((code) => (
+                    <MenuItem key={code} value={code}>
+                      {code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Category *"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  fullWidth
+                  error={!!errors.category}
+                  helperText={errors.category}
+                >
+                  {categories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>
+                      {cat}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  label="Date *"
+                  name="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  error={!!errors.date}
+                  helperText={errors.date}
+                  InputProps={{
+                    sx: {
+                      '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                        filter: theme.palette.mode === 'dark' ? 'invert(1)' : 'none'
+                      }
+                    }
+                  }}
+                />
+
+                <TextField
+                  label="Merchant/Vendor"
+                  name="merchant"
+                  value={formData.merchant}
+                  onChange={handleChange}
+                  fullWidth
+                  placeholder="e.g., Grab, Jollibee, Office Depot"
+                />
+
+                <TextField
+                  label="Total Amount (₱) *"
+                  name="total"
+                  type="number"
+                  value={formData.total}
+                  onChange={handleChange}
+                  fullWidth
+                  inputProps={{ step: '0.01', min: '0' }}
+                  error={!!errors.total}
+                  helperText={errors.total}
+                />
+
+                <TextField
+                  label="Purpose *"
+                  name="items"
+                  value={formData.items}
+                  onChange={handleChange}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  placeholder="Purpose of the expense..."
+                  error={!!errors.items}
+                  helperText={errors.items || 'Explain the business purpose of this expense'}
+                />
+                
+                <TextField
+                  label="Description *"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  placeholder="Description of this reimbursement application..."
+                  error={!!errors.description}
+                  helperText={errors.description}
+                />
+
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit}
+                  size="large"
+                  startIcon={<CheckCircle />}
+                  sx={{
+                    py: 1.5,
+                    fontWeight: 600,
+                    bgcolor: '#2e7d32',
+                    color: '#fafafa',
+                    '&:hover': {
+                      bgcolor: '#1b5e20',
+                    },
+                    '&:disabled': {
+                      bgcolor: 'action.disabledBackground',
+                      color: 'action.disabled',
+                    },
+                  }}
+                  disabled={loading || availableSapCodes.length === 0 || submitting}
+                >
+                  {submitting ? 'Submitting...' : 'Submit for Approval'}
+                </Button>
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Backdrop Loader for Submission */}
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          backdropFilter: 'blur(8px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        }}
+        open={submitting}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress color="inherit" size={60} thickness={4} />
+          <Typography variant="h6" sx={{ mt: 3, fontWeight: 600 }}>
+            Submitting Receipt...
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
+            Please wait while we process your reimbursement
+          </Typography>
+        </Box>
+      </Backdrop>
+    </>
   );
 }
 
-export default ReceiptUpload;
+export default ReceiptUpload
