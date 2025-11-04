@@ -100,15 +100,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal Server Error" });
 });
 
-if (process.env.NODE_ENV === "production") {
-  // Serve static files from React build
-  app.use(express.static(path.join(__dirname, "../../first-test/build")));
+// if (process.env.NODE_ENV === "production") {
+//   // Serve static files from React build
+//   app.use(express.static(path.join(__dirname, "../../first-test/build")));
 
-  // Handle client-side routing - FIXED: use "/*" instead of "*"
-  app.get("/*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../../first-test/build", "index.html"));
-  });
-}
+//   // Handle client-side routing - FIXED: use "/*" instead of "*"
+//   app.get("/*", (req, res) => {
+//     res.sendFile(path.join(__dirname, "../../first-test/build", "index.html"));
+//   });
+// }
 
 // ✅ Enhanced server startup with email verification
 const PORT = process.env.PORT || 4000;
