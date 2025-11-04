@@ -97,9 +97,9 @@ app.use((err, req, res, next) => {
 });
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  app.use(express.static(path.join(__dirname, "../first-test/build")));
   app.get("*", (res, req) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dis", "index.html"));
+    res.sendFile(path.join(__dirname, "../first-test", "build", "index.html"));
   });
 }
 
