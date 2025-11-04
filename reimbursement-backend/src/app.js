@@ -17,6 +17,7 @@ import adminRoutes from "./routes/admin.route.js";
 import sapCodeRoutes from "./routes/sapCode.routes.js";
 import { verifyEmailConfig } from "./utils/sendEmail.js"; // Add this import
 import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -61,7 +62,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-const __dirname = path.resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ✅ Debug log for /auth routes
 app.use((req, res, next) => {
@@ -99,9 +101,12 @@ app.use((err, req, res, next) => {
 });
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../first-test/build")));
-  app.get("*", (res, req) => {
-    res.sendFile(path.join(__dirname, "../first-test", "build", "index.html"));
+  // Serve static files from React build
+  app.use(express.static(path.join(__dirname, "../../first-test/build")));
+
+  // Handle client-side routing - FIXED: use "/*" instead of "*"
+  app.get("/*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../../first-test/build", "index.html"));
   });
 }
 
