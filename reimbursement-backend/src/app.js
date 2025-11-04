@@ -14,7 +14,7 @@ import approvalRoutes from "./routes/approvalRoutes.js";
 import userRoutes from "./routes/user.routes.js";
 import ocrRoutes from "./routes/ocrRoutes.js";
 import adminRoutes from "./routes/admin.route.js";
-import sapCodeRoutes from './routes/sapCode.routes.js';
+import sapCodeRoutes from "./routes/sapCode.routes.js";
 import { verifyEmailConfig } from "./utils/sendEmail.js"; // Add this import
 
 dotenv.config();
@@ -76,7 +76,7 @@ app.use("/api/approvals", approvalRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/ocr", ocrRoutes);
 app.use("/api/admin", adminRoutes);
-app.use('/api/sap-codes', sapCodeRoutes);
+app.use("/api/sap-codes", sapCodeRoutes);
 
 // ✅ Health check
 app.get("/", (req, res) => {
@@ -96,22 +96,28 @@ app.use((err, req, res, next) => {
 });
 
 // ✅ Enhanced server startup with email verification
-const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;
 (async () => {
   try {
     // Check email configuration
-    console.log('\n📧 Checking email configuration...');
+    console.log("\n📧 Checking email configuration...");
     await verifyEmailConfig();
-    
+
     // Sync database
     await sequelize.sync({ alter: false });
     console.log("✅ Database synced successfully");
-    
+
     // Start server
-    app.listen(PORT, () => {
-      console.log(`\n🚀 Server running: http://localhost:${PORT}`);
-      console.log(`🔑 Microsoft login: http://localhost:${PORT}/auth/microsoft`);
-      console.log(`📧 Email notifications: ${process.env.EMAIL_USER ? '✅ Configured' : '❌ Not configured'}\n`);
+    app.listen(process.env.PORT, () => {
+      console.log(`\n🚀 Server running: http://localhost:${process.env.PORT}`);
+      console.log(
+        `🔑 Microsoft login: http://localhost:${process.env.PORT}/auth/microsoft`
+      );
+      console.log(
+        `📧 Email notifications: ${
+          process.env.EMAIL_USER ? "✅ Configured" : "❌ Not configured"
+        }\n`
+      );
     });
   } catch (err) {
     console.error("❌ Server startup error:", err);
