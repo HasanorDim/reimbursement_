@@ -150,6 +150,8 @@ function Login() {
         } else {
           setChecking(false);
         }
+
+        showNotification(`Welcome back, ${data.user.name}!`, "success");
       } catch (error) {
         console.log("Not authenticated, showing login form");
         setChecking(false);
@@ -186,8 +188,6 @@ function Login() {
       </Box>
     );
   }
-
-  showNotification(`Welcome back, ${firstName}!`, "success");
 
   return (
     <Box
