@@ -187,6 +187,8 @@ function Login() {
     );
   }
 
+  showNotification(`Welcome back, ${firstName}!`, "success");
+
   return (
     <Box
       sx={{
