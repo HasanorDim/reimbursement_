@@ -26,11 +26,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.set("trust proxy", 1);
 
 // ✅ Cookie parser first
 app.use(cookieParser());
-
+app.set("trust proxy", 1);
 // ✅ Session middleware (must come before passport)
 app.use(
   session({
@@ -59,10 +58,7 @@ app.use(flash());
 // app.use(cors(corsOptions));
 
 const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "https://reimbursement-frontend.onrender.com", // Your new frontend URL
-  ],
+  origin: ["http://localhost:3000", "https://reimbursement-acu1.onrender.com"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
