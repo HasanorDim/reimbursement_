@@ -96,11 +96,11 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/sap-codes", sapCodeRoutes);
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.resolve(__dirname, "../first-test/build")));
+  app.use(express.static(path.resolve(__dirname, "../../first-test/build")));
 
   // ✅ WORKS on Express 5.x — matches everything that’s not handled above
   app.use((req, res) => {
-    res.sendFile(path.resolve(__dirname, "../first-test/build/index.html"));
+    res.sendFile(path.resolve(__dirname, "../../first-test/build/index.html"));
   });
 }
 
