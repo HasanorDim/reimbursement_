@@ -137,9 +137,12 @@ app.use((err, req, res, next) => {
 // }
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.resolve(__dirname, "../first-test/dist")));
+  // Serve static files from the correct folder
+  app.use(express.static(path.resolve(__dirname, "../first-test/build")));
+
+  // Handle client-side routing - use a named parameter or regex
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../first-test/dis/index.html"));
+    res.sendFile(path.resolve(__dirname, "../first-test/build/index.html"));
   });
 }
 // ✅ Enhanced server startup with email verification
