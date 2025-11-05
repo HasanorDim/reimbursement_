@@ -15,6 +15,7 @@ import {
 } from "@mui/icons-material";
 import { useAppContext } from "../App";
 import { axiosInstance } from "../lib/axios.js";
+import { baseURL } from "../lib/baseUrl.js";
 
 function Login() {
   const {
@@ -166,7 +167,7 @@ function Login() {
   ]);
 
   const handleMicrosoftLogin = () => {
-    window.location.href = "http://localhost:5000/auth/microsoft";
+    window.location.href = `${baseURL}/auth/microsoft`;
   };
 
   if (checking) {
