@@ -21,12 +21,12 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-const app = express();
-app.set("trust proxy", 1);
-
 // Fix __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const app = express();
+app.set("trust proxy", 1);
 
 // ✅ Cookie parser first
 app.use(cookieParser());
@@ -95,6 +95,15 @@ app.use("/api/ocr", ocrRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/sap-codes", sapCodeRoutes);
 
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.resolve(__dirname, "../first-test/build")));
+
+  // ✅ Use "*" — not "/*"
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../first-test/build/index.html"));
+  });
+}
+
 // ✅ Health check
 app.get("/", (req, res) => {
   res.json({
@@ -136,14 +145,6 @@ app.use((err, req, res, next) => {
 //   }
 // }
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.resolve(__dirname, "../first-test/build")));
-
-  // ✅ Fixed: Use a named parameter
-  app.get("/*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../first-test/build/index.html"));
-  });
-}
 // ✅ Enhanced server startup with email verification
 const PORT = process.env.PORT || 4000;
 (async () => {
