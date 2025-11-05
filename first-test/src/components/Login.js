@@ -167,7 +167,9 @@ function Login() {
   ]);
 
   const handleMicrosoftLogin = () => {
+    console.log("Redirecting to URL: ", baseURL);
     window.location.href = `${baseURL}/auth/microsoft`;
+    // window.location.href = "http://localhost:5000/auth/microsoft";
   };
 
   if (checking) {
