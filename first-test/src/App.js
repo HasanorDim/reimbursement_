@@ -11,7 +11,7 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 import Login from "./components/Login";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -20,7 +20,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { Snackbar, Alert } from "@mui/material";
 import SalesDirectorReimbursementList from "./components/SalesDirectorReimbursementList";
-
+import { axiosInstance } from "../src/lib/axios";
 
 // Global Context for State Management
 export const AppContext = createContext();
@@ -171,21 +171,40 @@ function App() {
   };
 
   const addReimbursement = async (reimbursement) => {
+    // try {
+    //   const res = await fetch("http://localhost:5000/api/reimbursements", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       ...reimbursement,
+    //       userId: user?.uid || user?.username,
+    //       userName: user?.displayName || user?.username,
+    //     }),
+    //   });
+
+    //   if (!res.ok) throw new Error("Failed to submit reimbursement");
+
+    //   const saved = await res.json();
+
+    //   setReimbursements([...reimbursements, saved]);
+    //   showNotification("Reimbursement submitted successfully!", "success");
+    //   return saved;
+    // } catch (error) {
+    //   console.error("Error adding reimbursement:", error);
+    //   showNotification(
+    //     "Failed to submit reimbursement. Please try again.",
+    //     "error"
+    //   );
+    // }
+
     try {
-      const res = await fetch("http://localhost:5000/api/reimbursements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...reimbursement,
-          userId: user?.uid || user?.username,
-          userName: user?.displayName || user?.username,
-        }),
+      const res = await axiosInstance.post("/api/reimbursements", {
+        ...reimbursement,
+        userId: user?.uid || user?.username,
+        userName: user?.displayName || user?.username,
       });
 
-      if (!res.ok) throw new Error("Failed to submit reimbursement");
-
-      const saved = await res.json();
-
+      const saved = res.data;
       setReimbursements([...reimbursements, saved]);
       showNotification("Reimbursement submitted successfully!", "success");
       return saved;
@@ -282,7 +301,6 @@ function App() {
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
         </Router>
-
         {/* Global Notification Snackbar */}
         <Snackbar
           open={notification.open}

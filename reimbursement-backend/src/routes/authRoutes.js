@@ -40,7 +40,7 @@ router.post(
     console.log("👤 Authenticated user:", req.user?.email);
     console.log("🆔 User ID:", req.user?.id);
     console.log("📦 Session after login:", req.session);
-    res.redirect(process.env.CLIENT_URL || "http://localhost:3000");
+    res.redirect(process.env.CLIENT_URL);
   }
 );
 
