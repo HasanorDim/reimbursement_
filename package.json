@@ -1,0 +1,22 @@
+{
+  "name": "reimbursement_",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm install --prefix reimbursement-backend && npm install --prefix first-test && npm run build --prefix first-test",
+    "start": "npm run start --prefix reimbursement-backend",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HasanorDim/reimbursement_.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HasanorDim/reimbursement_/issues"
+  },
+  "homepage": "https://github.com/HasanorDim/reimbursement_#readme"
+}
