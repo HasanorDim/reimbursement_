@@ -98,8 +98,8 @@ app.use("/api/sap-codes", sapCodeRoutes);
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.resolve(__dirname, "../first-test/build")));
 
-  // ✅ Express 5: Use parameter-based wildcard
-  app.get("/:path(*)", (req, res) => {
+  // ✅ WORKS on Express 5.x — matches everything that’s not handled above
+  app.use((req, res) => {
     res.sendFile(path.resolve(__dirname, "../first-test/build/index.html"));
   });
 }
