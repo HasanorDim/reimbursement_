@@ -137,9 +137,9 @@ app.use((err, req, res, next) => {
 // }
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../first-test/dist")));
+  app.use(express.static(path.resolve(__dirname, "../first-test/dist")));
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../first-test", "dis", "index.html"));
+    res.sendFile(path.resolve(__dirname, "../first-test/dis/index.html"));
   });
 }
 // ✅ Enhanced server startup with email verification
